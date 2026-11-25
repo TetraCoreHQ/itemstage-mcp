@@ -3,20 +3,19 @@ main = "src/worker.ts"
 compatibility_date = "2025-10-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domains (approved by Toby 2026-11-25). The same Worker serves both hosts:
+#   mcp.itemstage.com  → MCP server (this code)
+#   api.itemstage.com  → transparent proxy to the Supabase edge function
+routes = [
+  { pattern = "mcp.itemstage.com", custom_domain = true },
+  { pattern = "api.itemstage.com", custom_domain = true },
+]
+
 [vars]
 # Upstream REST API. Swap to https://api.itemstage.com/v1 once that DNS record exists.
 API_BASE = "https://cgqzwvmdtrebjacgctni.supabase.co/functions/v1/api/v1"
 # Public URL of this MCP endpoint, shown in the landing JSON.
 PUBLIC_URL = "https://mcp.itemstage.com/mcp"
-
-# Custom domains — enable after Toby approves the DNS records on itemstage.com
-# (Cloudflare, TRZ Holdings account). The same Worker serves both hosts:
-#   mcp.itemstage.com  → MCP server (this code)
-#   api.itemstage.com  → transparent proxy to the Supabase edge function
-# routes = [
-#   { pattern = "mcp.itemstage.com", custom_domain = true },
-#   { pattern = "api.itemstage.com", custom_domain = true },
-# ]
 
 [observability]
 enabled = true
