@@ -80,7 +80,7 @@ Local stdio build: `npm run build && ITEMSTAGE_API_KEY=… node dist/bin.js`.
 
 ## Status
 
-- 2026-11-25: scaffold complete, tests green, not yet deployed. Waiting on
-  DNS for `mcp.itemstage.com` / `api.itemstage.com` and the GitHub repo
-  `TetraCoreHQ/itemstage-mcp`. Until then the API answers at
-  `https://cgqzwvmdtrebjacgctni.supabase.co/functions/v1/api/v1`.
+- 2026-11-25: **live.** Deployed to Cloudflare (TRZ Holdings account) with
+  custom domains `mcp.itemstage.com` and `api.itemstage.com`. Repo:
+  `TetraCoreHQ/itemstage-mcp` (private). Deploy with `npm run deploy` using
+  the Workers token in the monorepo `.env` (`CLOUDFLARE_WORKERS_API_TOKEN`).
