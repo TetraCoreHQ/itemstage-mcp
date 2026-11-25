@@ -6,9 +6,12 @@
  *                           `isk_live_…` key the REST API uses)
  *   api.itemstage.com/*     transparent proxy to the Supabase edge function
  *                           (so the public API has a stable hostname)
+ *   api.itemstage.com/docs  developer guide; /docs/reference = interactive
+ *                           reference rendered from /v1/openapi.json
  */
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { createServer, bearerFrom, API_KEY_RE, SERVER_NAME, SERVER_VERSION } from './server.js';
+import { docsHtml, referenceHtml } from './docs.js';
 
 export interface Env {
   API_BASE: string;
@@ -25,6 +28,10 @@ const CORS = {
 
 function json(status: number, body: unknown, extra: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extra } });
+}
+
+function html(body: string): Response {
+  return new Response(body, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' } });
 }
 
 function unauthorized(url: URL, message: string): Response {
@@ -78,8 +85,17 @@ export default {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
-    // Public API hostname → proxy everything to the edge function.
-    if (url.hostname.startsWith('api.')) return proxyApi(req, env, url);
+    // Public API hostname: docs are served here, everything else is proxied to the edge function.
+    if (url.hostname.startsWith('api.')) {
+      const publicApi = `https://${url.host}/v1`;
+      if (url.pathname === '/' || url.pathname === '') return Response.redirect(`${url.origin}/docs`, 302);
+      if (url.pathname === '/docs' || url.pathname === '/docs/') return html(docsHtml(publicApi, env.PUBLIC_URL));
+      if (url.pathname === '/docs/reference' || url.pathname === '/docs/reference/') return html(referenceHtml());
+      return proxyApi(req, env, url);
+    }
+    if (url.pathname === '/docs' || url.pathname === '/docs/') {
+      return Response.redirect(`https://${url.hostname.replace(/^mcp\./, 'api.')}/docs#mcp`, 302);
+    }
 
     if (url.pathname === '/mcp') return handleMcp(req, env, url);
     if (url.pathname === '/health') return json(200, { status: 'ok', name: SERVER_NAME, version: SERVER_VERSION });
