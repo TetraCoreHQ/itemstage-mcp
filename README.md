@@ -80,8 +80,7 @@ refresh it when the API gains operations so the coverage test stays honest.
 Local stdio build: `npm run build && ITEMSTAGE_API_KEY=… node dist/bin.js`.
 
 Release: bump `version` in `package.json` and `server.json` together, then
-`npm publish` (runs typecheck, tests and build first) and
-`mcp-publisher publish` for the registry.
+push a `v*` tag; the Publish workflow handles npm and the registry.
 
 ## License
 
@@ -93,5 +92,7 @@ MIT.
   custom domains `mcp.itemstage.com` and `api.itemstage.com`. Repo:
   `TetraCoreHQ/itemstage-mcp`. Deploy with `npm run deploy` using
   the Workers token in the monorepo `.env` (`CLOUDFLARE_WORKERS_API_TOKEN`).
-- 2026-11-26: repo public, package `@itemstage/mcp` on npm, listed in the
-  official MCP registry as `io.github.TetraCoreHQ/itemstage-mcp`.
+- 2026-11-26: repo public; `@itemstage/mcp@0.1.0` on npm; listed in the
+  official MCP registry as `io.github.TetraCoreHQ/itemstage-mcp` (published by
+  `.github/workflows/publish.yml` through GitHub OIDC, the only way the org
+  namespace is accepted). Releases: bump both versions, push a `v*` tag.
