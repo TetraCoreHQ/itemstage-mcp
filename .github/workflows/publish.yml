@@ -1,0 +1,123 @@
+name: Publish
+
+# Releases run here, not from a laptop:
+#   - the MCP registry proves the io.github.TetraCoreHQ namespace from this
+#     job's OIDC token (the interactive `mcp-publisher login github` can only
+#     prove a personal namespace);
+#   - npm publishes carry provenance once trusted publishing is configured.
+#
+# ONE-TIME npm SETUP (package must already exist on npm, which it does since
+# 2026-11-26): npmjs.com -> @itemstage/mcp -> Settings -> Trusted publishing:
+#   Organization TetraCoreHQ, Repository itemstage-mcp, Workflow publish.yml,
+#   Environment blank, and TICK "Allow npm publish". Until that is ticked, the
+#   npm step is skipped when the version already exists and fails otherwise.
+#
+# TO RELEASE: bump `version` in package.json AND server.json, then
+#   git tag v0.1.1 && git push --tags
+# or run the workflow manually with dry_run = false.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build, test and validate without publishing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: npm 11 (OIDC trusted publishing needs >= 11.5.1)
+        run: |
+          npm install -g npm@11
+          echo "npm $(npm -v) on node $(node -v)"
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Versions agree
+        run: |
+          P=$(node -p "require('./package.json').version")
+          S=$(node -p "require('./server.json').version")
+          N=$(node -p "require('./package.json').mcpName")
+          R=$(node -p "require('./server.json').name")
+          [ "$P" = "$S" ] || { echo "::error::package.json $P != server.json $S"; exit 1; }
+          [ "$N" = "$R" ] || { echo "::error::mcpName $N != server.json name $R"; exit 1; }
+          echo "ok: $R@$P"
+
+      - name: Tarball sanity
+        run: |
+          set -euo pipefail
+          npm pack --silent --pack-destination "$RUNNER_TEMP" >/dev/null
+          tgz=$(ls -t "$RUNNER_TEMP"/*.tgz | head -1)
+          files=$(tar -tzf "$tgz" | sed "s|^package/||")
+          rm -f "$tgz"
+          echo "$files"
+          echo "$files" | grep -q 'dist/bin.js' || { echo '::error::missing dist/bin.js'; exit 1; }
+          echo "$files" | grep -q 'LICENSE' || { echo '::error::missing LICENSE'; exit 1; }
+          echo "$files" | grep -qE '(^|/)(\.env|\.npmrc|\.dev\.vars)' && { echo '::error::credential file in tarball'; exit 1; } || true
+
+      - name: Publish to npm (skipped when the version is already there)
+        if: github.event_name == 'push' || inputs.dry_run == false
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VER=$(node -p "require('./package.json').version")
+          if npm view "$NAME@$VER" version >/dev/null 2>&1; then
+            echo "SKIP  $NAME@$VER is already on npm"
+          else
+            npm publish --access public --provenance
+          fi
+
+      - name: Install mcp-publisher
+        if: github.event_name == 'push' || inputs.dry_run == false
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          ./mcp-publisher --version
+
+      - name: Validate server.json
+        if: github.event_name == 'push' || inputs.dry_run == false
+        run: ./mcp-publisher validate
+
+      - name: Wait for npm to serve the version
+        if: github.event_name == 'push' || inputs.dry_run == false
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VER=$(node -p "require('./package.json').version")
+          for i in $(seq 1 30); do
+            npm view "$NAME@$VER" version >/dev/null 2>&1 && { echo "visible"; exit 0; }
+            sleep 10
+          done
+          echo "::error::$NAME@$VER not readable on npm after 5 minutes"; exit 1
+
+      - name: Publish to the MCP registry
+        if: github.event_name == 'push' || inputs.dry_run == false
+        run: |
+          ./mcp-publisher login github-oidc
+          for i in 1 2 3 4 5; do
+            out=$(./mcp-publisher publish 2>&1) && { echo "$out"; exit 0; }
+            echo "$out"
+            case "$out" in
+              *"was not found"*) echo "attempt $i: registry cannot see the npm version yet"; sleep 20 ;;
+              *) echo "::error::registry publish failed"; exit 1 ;;
+            esac
+          done
+          exit 1
+
+      - name: Dry run summary
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        run: echo "Dry run only. Nothing was published."
