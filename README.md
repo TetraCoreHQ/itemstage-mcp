@@ -11,6 +11,7 @@ so the same permissions and workflow gates apply as in the app.
 - **Auth:** `Authorization: Bearer isk_live_…`. Create a key in the ItemStage
   app under **Settings → API keys** (owner or admin). The key acts as the person
   who created it.
+- **Plans:** included on every ItemStage plan.
 - **Tools:** 65, one per API operation. Names are plain verbs: `list_jobs`,
   `create_item`, `move_item`, `advance_item`, `answer_item_questions`,
   `upload_item_photo`, `export_job_csv`, …
@@ -24,14 +25,14 @@ claude mcp add --transport http itemstage https://mcp.itemstage.com/mcp \
   --header "Authorization: Bearer isk_live_…"
 ```
 
-**Claude Desktop / Cursor / anything that speaks stdio**
+**Claude Desktop / Cursor / anything that speaks stdio** (package [`@itemstage/mcp`](https://www.npmjs.com/package/@itemstage/mcp))
 
 ```json
 {
   "mcpServers": {
     "itemstage": {
       "command": "npx",
-      "args": ["-y", "itemstage-mcp"],
+      "args": ["-y", "@itemstage/mcp"],
       "env": { "ITEMSTAGE_API_KEY": "isk_live_…" }
     }
   }
@@ -78,9 +79,19 @@ refresh it when the API gains operations so the coverage test stays honest.
 
 Local stdio build: `npm run build && ITEMSTAGE_API_KEY=… node dist/bin.js`.
 
+Release: bump `version` in `package.json` and `server.json` together, then
+`npm publish` (runs typecheck, tests and build first) and
+`mcp-publisher publish` for the registry.
+
+## License
+
+MIT.
+
 ## Status
 
 - 2026-11-25: **live.** Deployed to Cloudflare (TRZ Holdings account) with
   custom domains `mcp.itemstage.com` and `api.itemstage.com`. Repo:
-  `TetraCoreHQ/itemstage-mcp` (private). Deploy with `npm run deploy` using
+  `TetraCoreHQ/itemstage-mcp`. Deploy with `npm run deploy` using
   the Workers token in the monorepo `.env` (`CLOUDFLARE_WORKERS_API_TOKEN`).
+- 2026-11-26: repo public, package `@itemstage/mcp` on npm, listed in the
+  official MCP registry as `io.github.TetraCoreHQ/itemstage-mcp`.

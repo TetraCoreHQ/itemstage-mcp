@@ -1,13 +1,47 @@
 {
   "name": "@itemstage/mcp",
   "version": "0.1.0",
-  "description": "MCP server for ItemStage: jobs, items, locations, questions, photos and workflow moves for AI assistants. Runs as a Cloudflare Worker (streamable HTTP) or locally over stdio.",
+  "description": "MCP server for ItemStage: jobs, items, locations, process questions, photos and workflow moves for AI assistants. Hosted at mcp.itemstage.com or run locally over stdio.",
   "license": "MIT",
-  "private": true,
+  "mcpName": "io.github.TetraCoreHQ/itemstage-mcp",
   "type": "module",
   "bin": {
     "itemstage-mcp": "./dist/bin.js"
   },
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TetraCoreHQ/itemstage-mcp.git"
+  },
+  "homepage": "https://itemstage.com/developers",
+  "bugs": {
+    "url": "https://github.com/TetraCoreHQ/itemstage-mcp/issues",
+    "email": "support@itemstage.com"
+  },
+  "keywords": [
+    "itemstage",
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "chain-of-custody",
+    "inventory",
+    "contents-restoration",
+    "itad",
+    "r2v3",
+    "workflow",
+    "ai",
+    "agent",
+    "claude"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -17,7 +51,8 @@
     "test": "vitest run",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "start": "node dist/bin.js"
+    "start": "node dist/bin.js",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.31.0",

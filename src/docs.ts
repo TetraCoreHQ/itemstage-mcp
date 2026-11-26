@@ -241,12 +241,12 @@ ${table(
 <p><strong>Claude Code</strong></p>
 <pre><code>claude mcp add --transport http itemstage ${mcpUrl} \\
   --header "Authorization: Bearer isk_live_…"</code></pre>
-<p><strong>Claude Desktop, Cursor and other stdio clients</strong></p>
+<p><strong>Claude Desktop, Cursor and other stdio clients</strong> (npm package <a href="https://www.npmjs.com/package/@itemstage/mcp">@itemstage/mcp</a>, source on <a href="https://github.com/TetraCoreHQ/itemstage-mcp">GitHub</a>)</p>
 <pre><code>{
   "mcpServers": {
     "itemstage": {
       "command": "npx",
-      "args": ["-y", "itemstage-mcp"],
+      "args": ["-y", "@itemstage/mcp"],
       "env": { "ITEMSTAGE_API_KEY": "isk_live_…" }
     }
   }
