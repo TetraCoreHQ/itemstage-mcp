@@ -77,6 +77,7 @@ export function docsHtml(apiBase: string, mcpUrl: string): string {
 <div style="margin-top:6px"><span class="pill">Auth</span> <code>Authorization: Bearer isk_live_…</code></div>
 <div style="margin-top:6px"><span class="pill">Spec</span> <a href="/v1/openapi.json">OpenAPI 3.1</a> · <a href="/docs/reference">interactive reference</a></div>
 <div style="margin-top:6px"><span class="pill">MCP</span> <code>${mcpUrl}</code></div>
+<div style="margin-top:6px"><span class="pill">More</span> <a href="https://itemstage.com/developers">API overview</a> · <a href="https://itemstage.com/developers/mcp">MCP server page</a> · <a href="https://itemstage.com/changelog">changelog</a></div>
 </div>
 
 <h2 id="start">Start here</h2>
